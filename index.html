@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REZDAR | نظام المفاضلة والقبول الجامعي الذكي</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --p: #6366f1; --pd: #4f46e5; --bg: #0f172a; --card: #1e293b; --txt: #f8fafc; --ok: #10b981; --warn: #f59e0b; --err: #ef4444; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: var(--txt); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; padding: 30px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 20px; margin-bottom: 30px; backdrop-filter: blur(10px); }
+        header h1 { font-size: 2.2rem; background: linear-gradient(to right, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        header p { color: #94a3b8; font-size: 1.1rem; }
+        .card { background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; border-radius: 16px; padding: 25px; margin-bottom: 20px; backdrop-filter: blur(10px); }
+        .title { font-size: 1.2rem; color: #a78bfa; margin-bottom: 20px; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .fg { display: flex; flex-direction: column; }
+        .fg label { font-weight: 600; margin-bottom: 8px; color: #cbd5e1; font-size: 0.95rem; }
+        .fg input, .fg select { padding: 12px; border: 2px solid #475569; border-radius: 10px; background: #0f172a; color: white; font-size: 1rem; transition: 0.3s; }
+        .fg input:focus, .fg select:focus { border-color: var(--p); outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+        .btn { background: linear-gradient(135deg, var(--p), var(--pd)); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.3s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99,102,241,0.4); }
+        .btn:disabled { opacity: 0.6; cursor: wait; }
+        .btn-pdf { background: linear-gradient(135deg, #ef4444, #dc2626); display: none; }
+        .rates { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .rbox { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(79,70,229,0.2)); border: 2px solid #4f46e5; padding: 20px; border-radius: 12px; text-align: center; }
+        .rbox h3 { font-size: 1rem; color: #c7d2fe; margin-bottom: 8px; }
+        .rbox .val { font-size: 2.2rem; font-weight: 900; color: #a78bfa; }
+        .rbox.general { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.2)); border-color: #10b981; }
+        .rbox.general .val { color: #34d399; }
+        .tblw { overflow-x: auto; border-radius: 12px; border: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; background: #0f172a; min-width: 900px; }
+        th, td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #334155; font-size: 0.9rem; }
+        th { background: #1e293b; color: #a78bfa; font-weight: 700; position: sticky; top: 0; }
+        tr:hover { background: rgba(99,102,241,0.05); }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+        .b-local { background: #3b82f6; color: white; margin-left: 5px; }
+        .p-vh { background: rgba(16,185,129,0.2); color: #34d399; }
+        .p-h { background: rgba(52,211,153,0.2); color: #10b981; }
+        .p-m { background: rgba(245,158,11,0.2); color: #f59e0b; }
+        .p-l { background: rgba(239,68,68,0.2); color: #ef4444; }
+        .loader { text-align: center; padding: 30px; display: none; }
+        .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(167,139,250,0.3); border-top-color: #a78bfa; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .err { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #fca5a5; padding: 15px; border-radius: 10px; text-align: center; display: none; margin-top: 15px; }
+        @media print { body { background: white; color: black; } .no-print { display: none; } .card { background: white; border: 1px solid #ccc; } table { background: white; } th { background: #f1f5f9; color: black; } td { color: black; } }
+        @media (max-width: 768px) { .rates { grid-template-columns: 1fr; } header h1 { font-size: 1.6rem; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="no-print">
+        <h1> نظام REZDAR </h1>
+        <p>لحساب المعدل وتحديد ما هو المقبول به حسب المعدل الأقسام الجامعية الحكومية </p>
+    </header>
+
+    <div class="card no-print">
+        <div class="title">📍 البيانات الأساسية</div>
+        <div class="grid">
+            <div class="fg">
+                <label>المحافظة الجغرافية</label>
+                <select id="city">
+                    <option value="دهوك">دهوك</option>
+                    <option value="هولير">هولير </option>
+                    <option value="السليمانية">السليمانية</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label>حالة التخرج</label>
+                <select id="gradStatus">
+                    <option value="new">نعم، خريج السنة الحالية </option>
+                    <option value="old">لا، من خريجي السنوات السابقة </option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card no-print">
+        <div class="title"> درجات وعلامات الطالب الدراسية</div>
+        <div class="grid">
+            <div class="fg"><label>الرياضيات</label><input type="number" id="math" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>الفيزياء</label><input type="number" id="physics" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>الكيمياء</label><input type="number" id="chemistry" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>الأحياء</label><input type="number" id="biology" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>الإنجليزي</label><input type="number" id="english" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>الكوردي</label><input type="number" id="kurdish" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>العربي مع الإسلامية</label><input type="number" id="arabic" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>معدل صف العاشر</label><input type="number" id="g10" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+            <div class="fg"><label>معدل صف الحادي عشر</label><input type="number" id="g11" min="0" max="100" step="0.01" placeholder="0 - 100"></div>
+        </div>
+        <button class="btn" id="calcBtn" onclick="startProcess()"> استخرج </button>
+        <div class="loader" id="loader"><div class="spinner"></div><p style="margin-top:15px; color:#a78bfa;">جاري جلب البيانات من Google Sheets (3500+ قسم)... يرجى الانتظار</p></div>
+        <div class="err" id="errMsg"></div>
+    </div>
+
+    <div id="resultsSection" style="display:none;">
+        <div class="card" id="pdfContent">
+            <div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #4f46e5; padding-bottom:15px;">
+                <h2 style="color:#a78bfa;">وثيقة التنبؤ بالقبول الجامعي</h2>
+                <p style="color:#94a3b8;">صادرة من نظام REZDAR الذكي</p>
+            </div>
+
+            <div class="rates">
+                <div class="rbox">
+                    <h3>معدل الكليات الطبية والهندسية (النوع 2)</h3>
+                    <div class="val" id="rate2Val">-</div>
+                </div>
+                <div class="rbox general">
+                    <h3>المعدل العام (النوع 1)</h3>
+                    <div class="val" id="rate1Val">-</div>
+                </div>
+            </div>
+
+            <div class="title">📋 الأقسام المؤهلة للقبول (مرتبة حسب الأولوية)</div>
+            <div class="tblw">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>المدينة</th>
+                            <th>الجامعة</th>
+                            <th>الكلية / المعهد</th>
+                            <th>القسم</th>
+                            <th>نوع الدراسة</th>
+                            <th>معدل الطالب للقسم</th>
+                            <th>معدل القبول</th>
+                            <th>الاحتمالية</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+        </div>
+        <button class="btn btn-pdf no-print" onclick="exportPDF()">📥 تحميل الوثيقة كملف PDF</button>
+    </div>
+
+    <footer class="no-print" style="text-align:center; margin-top:30px; color:#64748b; font-size:0.9rem;">
+        <p>تطوير المنصة بواسطة rezdar © 2026</p>
+    </footer>
+</div>
+
+<script>
+// ===================== روابط Google Sheets الستة =====================
+const CSV_URLS = [
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vTY1A3VRNq9Df9D8fOwN3-Bnz7VIifKeZ5d_en5CUD6kb2Asq6_qlGcZqk1Bz_YncTGd6QSPoOGIHKz/pub?output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-PTmNoZQ7jTxQzPaAdsDVszIjMSnJRl3yupGb6zLBXdVsVsFrcuB2EXbVLe1MKAFrcXffczMBNajx/pub?output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQyJ-FERQKOs6pueheLtquVMCHKR-V1PhA2YUOQoYXQg3XKrbtaoQENZX1p0CAFbFSaoLNPXA2zEWxY/pub?output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGM9jJ-R0Ot3sGC4Y7Tz-Nhq2MGR25mTxvwsjTpW3TV57kYVbzpqZCc-kEc6RwF-1-wak6PSkL2ZBM/pub?output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vTw4c28jmiMrh2kI-8OwViXbLcLHcA54utsEeFPalcflVnrQQDmxuy0fbf6DN7s_yLUXmOJkLnSyX8m/pub?output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSWb5oiMIA_ATi1WS_KHZgSoQG18hZ-92KsfeUaC9FSWFqgZV9mRXbl3tqEI7v8xmV-tQJ2eR0bZ5c-/pub?output=csv'
+];
+
+// ===================== دالة تحليل CSV احترافية =====================
+function parseCSV(text) {
+    const rows = [];
+    let i = 0, row = [], col = '', inQuotes = false;
+    while (i < text.length) {
+        let c = text[i];
+        if (inQuotes) {
+            if (c === '"') {
+                if (text[i+1] === '"') { col += '"'; i++; }
+                else inQuotes = false;
+            } else col += c;
+        } else {
+            if (c === '"') inQuotes = true;
+            else if (c === ',') { row.push(col.trim()); col = ''; }
+            else if (c === '\n' || c === '\r') {
+                if (c === '\r' && text[i+1] === '\n') i++;
+                row.push(col.trim());
+                if (row.length > 1 || row[0] !== '') rows.push(row);
+                row = []; col = '';
+            } else col += c;
+        }
+        i++;
+    }
+    if (col !== '' || row.length > 0) { row.push(col.trim()); rows.push(row); }
+    return rows;
+}
+
+// ===================== معادلات حساب المعدلات (حسب كودك تماماً) =====================
+function calculateRates(m, p, c, b, e, k, a, g10, g11) {
+    const weights = { m: 6, p: 4, c: 4, b: 4, e: 5, k: 4, a: 5 };
+    const sumW = 32;
+
+    const stdAvg = (obj) => Object.values(obj).reduce((s, v) => s + v, 0) / Object.keys(obj).length;
+    const wAvg = (obj, w) => { let s = 0; for(let key in obj) s += obj[key] * w[key]; return s / sumW; };
+
+    // المعدل العام (النوع 1)
+    const std1 = stdAvg({m, p, c, b, e, k, a});
+    const w1 = wAvg({m, p, c, b, e, k, a}, weights);
+    const swedish1 = (w1 * 0.8) + (g10 * 0.1) + (g11 * 0.1);
+    const rate1 = Math.max(std1, swedish1);
+
+    // المعدل الطبي/الهندسي (النوع 2) - يأخذ أعلى احتمال من عدة سيناريوهات
+    const scenarios = [
+        {m, p, c, b, e, k, a},
+        {m, p, c, b, e},
+        {m, p, c, b, e, k},
+        {m, p, c, b, e, a}
+    ];
+    const wScenarios = [
+        {m:6, p:4, c:4, b:4, e:5, k:4, a:5},
+        {m:6, p:4, c:4, b:4, e:5},
+        {m:6, p:4, c:4, b:4, e:5, k:4},
+        {m:6, p:4, c:4, b:4, e:5, a:5}
+    ];
+
+    let maxStd2 = 0, maxW2 = 0;
+    for(let i=0; i<scenarios.length; i++) {
+        maxStd2 = Math.max(maxStd2, stdAvg(scenarios[i]));
+        // حساب الوزن النسبي للسيناريو
+        let wSum = Object.values(wScenarios[i]).reduce((s, v) => s + v, 0);
+        let currentW = 0;
+        for(let key in scenarios[i]) currentW += scenarios[i][key] * wScenarios[i][key];
+        maxW2 = Math.max(maxW2, currentW / wSum);
+    }
+    
+    const swedish2 = (maxW2 * 0.8) + (g10 * 0.1) + (g11 * 0.1);
+    const rate2 = Math.max(maxStd2, swedish2);
+
+    return { rate1, rate2 };
+}
+
+// ===================== العملية الرئيسية =====================
+async function startProcess() {
+    const btn = document.getElementById('calcBtn');
+    const loader = document.getElementById('loader');
+    const errMsg = document.getElementById('errMsg');
+    const resultsSection = document.getElementById('resultsSection');
+    
+    errMsg.style.display = 'none';
+    resultsSection.style.display = 'none';
+    btn.disabled = true;
+    loader.style.display = 'block';
+
+    try {
+        // 1. جلب البيانات من الـ 6 ملفات
+        const responses = await Promise.all(CSV_URLS.map(url => fetch(url).then(r => r.text())));
+        let allData = [];
+        
+        responses.forEach(text => {
+            const rows = parseCSV(text);
+            if (rows.length < 2) return;
+            const headers = rows[0];
+            for (let i = 1; i < rows.length; i++) {
+                const obj = {};
+                headers.forEach((h, idx) => obj[h] = rows[i][idx] ? rows[i][idx].replace(/"/g, '').trim() : '');
+                if (obj['المعدل']) allData.push(obj);
+            }
+        });
+
+        if (allData.length === 0) throw new Error("لم يتم العثور على بيانات في ملفات Google Sheets.");
+
+        // 2. جلب المدخلات وحساب المعدلات
+        const getVal = id => parseFloat(document.getElementById(id).value) || 0;
+        const m = getVal('math'), p = getVal('physics'), c = getVal('chemistry'), b = getVal('biology');
+        const e = getVal('english'), k = getVal('kurdish'), a = getVal('arabic');
+        const g10 = getVal('g10'), g11 = getVal('g11');
+        const city = document.getElementById('city').value;
+        const isOld = document.getElementById('gradStatus').value === 'old';
+
+        if (m === 0 && p === 0 && c === 0 && b === 0 && e === 0 && k === 0 && a === 0) {
+            throw new Error("يرجى إدخال علامات الطالب على الأقل في مادة واحدة!");
+        }
+
+        const { rate1, rate2 } = calculateRates(m, p, c, b, e, k, a, g10, g11);
+        document.getElementById('rate1Val').textContent = rate1.toFixed(2) + '%';
+        document.getElementById('rate2Val').textContent = rate2.toFixed(2) + '%';
+
+        // 3. فلترة البيانات حسب نوع الدراسة (جديد/قديم)
+        const filteredData = allData.filter(row => {
+            const type = row['نوع الدراسة'] || '';
+            if (isOld) return type.includes('پاراڵێل') || type.includes('غير مجاني') || type.includes('ئيواران');
+            else return type.includes('زانكولاين') || type.includes('مجاني');
+        });
+
+        // 4. حساب قبول كل قسم
+        let results = [];
+        filteredData.forEach(row => {
+            const reqStr = (row['المعدل'] || '').toString().replace('%', '').trim();
+            const req = parseFloat(reqStr);
+            if (isNaN(req)) return;
+
+            const avgType = parseInt(row['نوع المعدل']) || 1;
+            const baseRate = (avgType === 2) ? rate2 : rate1;
+
+            // جلب أوزان المواد
+            const wM = parseFloat(row['الرياضيات']) || 0;
+            const wP = parseFloat(row['الفيزياء']) || 0;
+            const wC = parseFloat(row['الكيمياء']) || 0;
+            const wB = parseFloat(row['الاحياء']) || 0;
+            const wE = parseFloat(row['الإنكليزي']) || 0;
+            const wK = parseFloat(row['الكوردي']) || 0;
+            const wA = parseFloat(row['العربي مع الإسلامية']) || 0;
+
+            let finalScore;
+            if (wM === 0 && wP === 0 && wC === 0 && wB === 0 && wE === 0 && wK === 0 && wA === 0) {
+                // لا توجد مواد موزونة، يأخذ المعدل كما هو
+                finalScore = baseRate;
+            } else {
+                // نظام الوحدات: 70% من المعدل + 30% من المواد (مجموع الضرب / 100)
+                const subjectScore = (m * wM + p * wP + c * wC + b * wB + e * wE + k * wK + a * wA) / 100;
+                finalScore = (baseRate * 0.70) + subjectScore;
+            }
+
+            const diff = req - finalScore;
+
+            // شرط القبول: فرق 4% أو أقل
+            if (diff <= 4.0) {
+                let probText, probClass;
+                if (diff <= 0) { probText = "عالي جداً"; probClass = "p-vh"; }
+                else if (diff <= 1.5) { probText = "عالي"; probClass = "p-h"; }
+                else if (diff <= 3) { probText = "متوسط"; probClass = "p-m"; }
+                else { probText = "ضعيف"; probClass = "p-l"; }
+
+                results.push({
+                    city: row['المدينة'] || '',
+                    uni: row['اسم الجامعة'] || '',
+                    college: row['الكلية/معهد'] || '',
+                    dept: row['القسم'] || '',
+                    type: row['نوع الدراسة'] || '',
+                    period: row['فترة الدراسة'] || '',
+                    score: finalScore,
+                    req: req,
+                    diff: diff,
+                    probText, probClass,
+                    isLocal: (row['المدينة'] || '').trim() === city
+                });
+            }
+        });
+
+        // 5. الترتيب: المدينة المحلية أولاً، ثم حسب الأقرب لمعدل الطالب
+        results.sort((a, b) => {
+            if (a.isLocal && !b.isLocal) return -1;
+            if (!a.isLocal && b.isLocal) return 1;
+            return a.diff - b.diff;
+        });
+
+        // 6. عرض النتائج
+        const tbody = document.getElementById('tbody');
+        tbody.innerHTML = '';
+        if (results.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:#fca5a5;">⚠️ لا توجد أقسام متاحة للقبول ضمن هامش 4% بناءً على معدلاتك الحالية.</td></tr>';
+        } else {
+            results.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.isLocal ? '<span class="badge b-local">محلي</span>' : ''} ${r.city}</td>
+                    <td><strong>${r.uni}</strong></td>
+                    <td>${r.college}</td>
+                    <td>${r.dept}</td>
+                    <td>${r.type} <br><small style="color:#94a3b8">${r.period}</small></td>
+                    <td style="color:#a78bfa; font-weight:bold;">${r.score.toFixed(2)}%</td>
+                    <td>${r.req.toFixed(2)}%</td>
+                    <td><span class="badge ${r.probClass}">${r.probText}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        resultsSection.style.display = 'block';
+        document.querySelector('.btn-pdf').style.display = 'block';
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (error) {
+        console.error(error);
+        errMsg.textContent = "❌ حدث خطأ: " + error.message;
+        errMsg.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        loader.style.display = 'none';
+    }
+}
+
+// ===================== تصدير PDF =====================
+function exportPDF() {
+    const element = document.getElementById('pdfContent');
+    const opt = {
+        margin: 0.3,
+        filename: 'وثيقة_القبول_ريزدار.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
+    const btn = document.querySelector('.btn-pdf');
+    const orig = btn.textContent;
+    btn.textContent = '⏳ جاري إنشاء الملف...';
+    btn.disabled = true;
+    html2pdf().set(opt).from(element).save().then(() => {
+        btn.textContent = orig;
+        btn.disabled = false;
+    });
+}
+</script>
+
+</body>
+</html>
