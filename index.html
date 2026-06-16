@@ -58,7 +58,7 @@
     </header>
 
     <div class="card no-print">
-        <div class="title">📍 البيانات الأساسية</div>
+        <div class="title"> البيانات الأساسية</div>
         <div class="grid">
             <div class="fg">
                 <label>المحافظة الجغرافية</label>
@@ -125,7 +125,6 @@
                             <th>القسم</th>
                             <th>نوع الدراسة</th>
                             <th>معدل الطالب للقسم</th>
-                            <th>معدل القبول</th>
                             <th>الاحتمالية</th>
                         </tr>
                     </thead>
@@ -133,7 +132,6 @@
                 </table>
             </div>
         </div>
-        <button class="btn btn-pdf no-print" onclick="exportPDF()">📥 تحميل الوثيقة كملف PDF</button>
     </div>
 
     <footer class="no-print" style="text-align:center; margin-top:30px; color:#64748b; font-size:0.9rem;">
@@ -379,7 +377,7 @@ function exportPDF() {
     const element = document.getElementById('pdfContent');
     const opt = {
         margin: 0.3,
-        filename: 'وثيقة_القبول_ريزدار.pdf',
+        filename: 'وثيقة_القبول.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
